@@ -1,6 +1,6 @@
 // fnODataFeedAnalyser
 (ODataFeed as text) => 
-%   let
+   let
     Source = OData.Feed(ODataFeed),
     SourceToTable = Table.RenameColumns(
 					        Table.DemoteHeaders(Table.FromValue(Source)), 
