@@ -1,0 +1,162 @@
+DEFINE
+    MEASURE 'itemLedgerEntries'[Total Sales Amount] = SUM(itemLedgerEntries[salesAmountActual])
+    MEASURE 'itemLedgerEntries'[Total Cost Amount] = CALCULATE(
+    SUM(itemLedgerEntries[costAmountActual]),
+    itemLedgerEntries[entryType] = "Sale"
+)
+    MEASURE 'itemLedgerEntries'[Total Quantity] = SUM(itemLedgerEntries[quantity])
+    MEASURE 'itemLedgerEntries'[Gross Profit] = [Total Sales Amount] + [Total Cost Amount]
+    MEASURE 'itemLedgerEntries'[Gross Margin %] = CALCULATE(DIVIDE([Gross Profit], [Total Sales Amount]), ALL())
+    MEASURE 'itemLedgerEntries'[Average Unit Price] = DIVIDE([Total Sales Amount], [Total Quantity])
+    MEASURE 'itemLedgerEntries'[Average Unit Cost] = DIVIDE([Total Cost Amount], [Total Quantity])
+    MEASURE 'itemLedgerEntries'[Sales YTD] = CALCULATE([Total Sales Amount], DATESYTD('Date'[Date]))
+    MEASURE 'itemLedgerEntries'[Sales MTD] = CALCULATE([Total Sales Amount], DATESMTD('Date'[Date]))
+    MEASURE 'itemLedgerEntries'[Sales QTD] = CALCULATE([Total Sales Amount], DATESQTD('Date'[Date]))
+    MEASURE 'itemLedgerEntries'[Sales Last Year] = CALCULATE([Total Sales Amount], DATEADD('Date'[Date], -1, YEAR))
+    MEASURE 'itemLedgerEntries'[Sales YoY Growth] = [Total Sales Amount] - [Sales Last Year]
+    MEASURE 'itemLedgerEntries'[Sales YoY Growth %] = DIVIDE([Sales YoY Growth], [Sales Last Year])
+    MEASURE 'itemLedgerEntries'[12M Rolling Sales] = CALCULATE([Total Sales Amount],
+            DATESINPERIOD('Date'[Date], MAX('Date'[Date]), -12, MONTH)
+        )
+    MEASURE 'itemLedgerEntries'[3M Moving Avg Sales] = AVERAGEX(
+            DATESINPERIOD('Date'[Date], MAX('Date'[Date]), -3, MONTH),
+            [Total Sales Amount]
+        )
+    MEASURE 'itemLedgerEntries'[Cumulative Sales] = CALCULATE(
+            [Total Sales Amount],
+            FILTER(ALL('Date'), 'Date'[Date] <= MAX('Date'[Date]))
+        )
+    MEASURE 'itemLedgerEntries'[Cumulative Quantity] = CALCULATE(
+            [Total Quantity],
+            FILTER(ALL('Date'), 'Date'[Date] <= MAX('Date'[Date]))
+        )
+    MEASURE 'itemLedgerEntries'[Sales per Customer] = DIVIDE([Total Sales Amount], DISTINCTCOUNT(customers[number]))
+    MEASURE 'itemLedgerEntries'[Average Order Value] = DIVIDE([Total Sales Amount], DISTINCTCOUNT(itemLedgerEntries[documentNumber]))
+    MEASURE 'itemLedgerEntries'[Customer Balance Total] = SUM(customers[balanceDue])
+    MEASURE 'itemLedgerEntries'[Customer Credit Limit Total] = SUM(customers[creditLimit])
+    MEASURE 'itemLedgerEntries'[Credit Utilisation %] = DIVIDE([Customer Balance Total], [Customer Credit Limit Total])
+    MEASURE 'itemLedgerEntries'[Sales per Item] = DIVIDE([Total Sales Amount], DISTINCTCOUNT(items[number]))
+    MEASURE 'itemLedgerEntries'[Inventory Value] = SUMX(items, items[inventory] * items[unitCost])
+    MEASURE 'itemLedgerEntries'[Contribution Margin per Item] = DIVIDE([Gross Profit], DISTINCTCOUNT(items[number]))
+    MEASURE 'itemLedgerEntries'[Sales by Category %] = DIVIDE([Total Sales Amount],
+            CALCULATE([Total Sales Amount], ALLSELECTED(itemCategories))
+        )
+    MEASURE 'itemLedgerEntries'[Credit Memos] = CALCULATE([Total Sales Amount], itemLedgerEntries[documentType] = "Credit Memo")
+    MEASURE 'itemLedgerEntries'[Sales Entries Only] = CALCULATE([Total Sales Amount], itemLedgerEntries[entryType] = "Sale")
+    MEASURE 'itemLedgerEntries'[Profitability Index] = DIVIDE([Total Sales Amount], [Total Cost Amount])
+    MEASURE 'itemLedgerEntries'[Sales Growth Index] = DIVIDE([Total Sales Amount], [Sales Last Year])
+    MEASURE 'itemLedgerEntries'[Customer Lifetime Sales] = CALCULATE([Total Sales Amount], ALL('Date'))
+    MEASURE 'itemLedgerEntries'[% of Total Sales] = DIVIDE([Total Sales Amount],
+            CALCULATE([Total Sales Amount], ALL(itemLedgerEntries))
+        )
+    MEASURE 'itemLedgerEntries'[Customer % of Total Sales] = DIVIDE([Total Sales Amount], CALCULATE([Total Sales Amount], ALL(customers)))
+    MEASURE 'itemLedgerEntries'[Gross Profit per Customer] = DIVIDE([Gross Profit], DISTINCTCOUNT(customers[number]))
+    MEASURE 'itemLedgerEntries'[Gross Margin % per Customer] = DIVIDE([Gross Profit per Customer], [Sales per Customer])
+    MEASURE 'itemLedgerEntries'[Item % of Total Sales] = DIVIDE([Total Sales Amount], CALCULATE([Total Sales Amount], ALLSELECTED(items)))
+    MEASURE 'itemLedgerEntries'[Profit per Quantity] = DIVIDE([Gross Profit], [Total Quantity])
+    MEASURE 'itemLedgerEntries'[Stock Coverage Days] = DIVIDE(
+            SUM(items[inventory]),
+            AVERAGEX(
+                DATESINPERIOD('Date'[Date], MAX('Date'[Date]), -90, DAY),
+                [Total Quantity]
+            )
+        ) * 90
+    MEASURE 'itemLedgerEntries'[Average Lines per Document] = DIVIDE(COUNTROWS(itemLedgerEntries), DISTINCTCOUNT(itemLedgerEntries[documentNumber]))
+    MEASURE 'itemLedgerEntries'[Sales Index (Base Year at 100)] = DIVIDE(
+            [Total Sales Amount],
+            CALCULATE([Total Sales Amount],
+                FILTER(
+                    ALL('Date'),
+                    YEAR('Date'[Date]) = MINX(ALL('Date'), YEAR('Date'[Date]))
+                )
+            )
+        ) * 100
+    MEASURE 'itemLedgerEntries'[Profit Index (Base Year at 100)] = DIVIDE(
+            [Gross Profit],
+            CALCULATE([Gross Profit],
+                FILTER(
+                    ALL('Date'),
+                    YEAR('Date'[Date]) = MINX(ALL('Date'), YEAR('Date'[Date]))
+                )
+            )
+        ) * 100
+    MEASURE 'itemLedgerEntries'[Gross Profit Last Year] = CALCULATE([Gross Profit], DATEADD('Date'[Date], -1, YEAR))
+    MEASURE 'itemLedgerEntries'[Gross Margin % Last Year] = DIVIDE([Gross Profit Last Year], [Sales Last Year])
+    MEASURE 'itemLedgerEntries'[Profit per Product] = DIVIDE(
+    [Gross Profit],
+    DISTINCTCOUNT(items[number])
+)
+    MEASURE 'itemLedgerEntries'[Profit % by Product] = DIVIDE(
+    [Gross Profit],
+    CALCULATE([Gross Profit], ALLSELECTED(items))
+)
+    MEASURE 'itemLedgerEntries'[Gross Profit YoY Growth] = [Gross Profit] - [Gross Profit Last Year]
+    MEASURE 'itemLedgerEntries'[Gross Profit YoY Growth %] = DIVIDE([Gross Profit YoY Growth], [Gross Profit Last Year])
+    MEASURE 'itemLedgerEntries'[Cumulative Sales %] = DIVIDE(
+            CALCULATE(
+                [Total Sales Amount],
+                FILTER(
+                    ALLSELECTED(customers),
+                    [Total Sales Amount] >= MAXX(ALLSELECTED(customers), [Total Sales Amount])
+                )
+            ),
+            CALCULATE([Total Sales Amount], ALL(customers))
+        )
+    MEASURE 'itemLedgerEntries'[Sales Variance YoY] = [Total Sales Amount] - [Sales Last Year]
+    MEASURE 'itemLedgerEntries'[Gross Profit Variance YoY] = [Gross Profit] - [Gross Profit Last Year]
+    MEASURE 'itemLedgerEntries'[Contribution Margin %] = DIVIDE([Gross Profit], [Total Sales Amount])
+
+EVALUATE
+    SUMMARIZECOLUMNS(
+        "Total Sales Amount", [Total Sales Amount],
+        "Total Cost Amount", [Total Cost Amount],
+        "Total Quantity", [Total Quantity],
+        "Gross Profit", [Gross Profit],
+        "Gross Margin %", [Gross Margin %],
+        "Average Unit Price", [Average Unit Price],
+        "Average Unit Cost", [Average Unit Cost],
+        "Sales YTD", [Sales YTD],
+        "Sales MTD", [Sales MTD],
+        "Sales QTD", [Sales QTD],
+        "Sales Last Year", [Sales Last Year],
+        "Sales YoY Growth", [Sales YoY Growth],
+        "Sales YoY Growth %", [Sales YoY Growth %],
+        "12M Rolling Sales", [12M Rolling Sales],
+        "3M Moving Avg Sales", [3M Moving Avg Sales],
+        "Cumulative Sales", [Cumulative Sales],
+        "Cumulative Quantity", [Cumulative Quantity],
+        "Sales per Customer", [Sales per Customer],
+        "Average Order Value", [Average Order Value],
+        "Customer Balance Total", [Customer Balance Total],
+        "Customer Credit Limit Total", [Customer Credit Limit Total],
+        "Credit Utilisation %", [Credit Utilisation %],
+        "Sales per Item", [Sales per Item],
+        "Inventory Value", [Inventory Value],
+        "Contribution Margin per Item", [Contribution Margin per Item],
+        "Sales by Category %", [Sales by Category %],
+        "Credit Memos", [Credit Memos],
+        "Sales Entries Only", [Sales Entries Only],
+        "Profitability Index", [Profitability Index],
+        "Sales Growth Index", [Sales Growth Index],
+        "Customer Lifetime Sales", [Customer Lifetime Sales],
+        "% of Total Sales", [% of Total Sales],
+        "Customer % of Total Sales", [Customer % of Total Sales],
+        "Gross Profit per Customer", [Gross Profit per Customer],
+        "Gross Margin % per Customer", [Gross Margin % per Customer],
+        "Item % of Total Sales", [Item % of Total Sales],
+        "Profit per Quantity", [Profit per Quantity],
+        "Stock Coverage Days", [Stock Coverage Days],
+        "Average Lines per Document", [Average Lines per Document],
+        "Sales Index (Base Year at 100)", [Sales Index (Base Year at 100)],
+        "Profit Index (Base Year at 100)", [Profit Index (Base Year at 100)],
+        "Gross Profit Last Year", [Gross Profit Last Year],
+        "Gross Margin % Last Year", [Gross Margin % Last Year],
+        "Profit per Product", [Profit per Product],
+        "Profit % by Product", [Profit % by Product],
+        "Gross Profit YoY Growth", [Gross Profit YoY Growth],
+        "Gross Profit YoY Growth %", [Gross Profit YoY Growth %],
+        "Cumulative Sales %", [Cumulative Sales %],
+        "Sales Variance YoY", [Sales Variance YoY],
+        "Gross Profit Variance YoY", [Gross Profit Variance YoY],
+        "Contribution Margin %", [Contribution Margin %]
+    )
